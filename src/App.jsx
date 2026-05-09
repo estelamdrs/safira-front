@@ -68,6 +68,30 @@ function App() {
     }
   }
 
+  async function disconnectGmail() {
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/gmail/disconnect/`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao desconectar Gmail.");
+      }
+
+      setIsGmailConnected(false);
+      setEmails([]);
+      setAnalysis(null);
+      setSelectedEmailId(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     async function checkGmailStatus() {
       try {
@@ -122,13 +146,15 @@ function App() {
                 : "Gmail desconectado"}
             </div>
 
-            <button
-              onClick={connectGmail}
-              disabled={isGmailConnected}
-              className={!isGmailConnected ? "" : "disabled-button"}
-            >
-              {isGmailConnected ? "Conectado" : "Conectar Gmail"}
-            </button>
+            {isGmailConnected ? (
+              <button className="disconnect-button" onClick={disconnectGmail}>
+                Desconectar Gmail
+              </button>
+            ) : (
+              <button onClick={connectGmail}>
+                Conectar Gmail
+              </button>
+            )}
 
             <button onClick={loadEmails} disabled={!isGmailConnected || loadingEmails}>
               {loadingEmails ? "Carregando..." : "Listar e-mails"}
