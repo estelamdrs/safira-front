@@ -100,15 +100,6 @@ function App() {
           <h1>Safira</h1>
           <p>Assistente inteligente para Gmail.</p>
         </div>
-
-        <div className="sidebar-card">
-          <span>Status</span>
-          <strong>
-            {isGmailConnected || emails.length > 0
-              ? "Gmail conectado"
-              : "Aguardando conexão"}
-          </strong>
-        </div>
       </aside>
 
       <main className="main-content">
@@ -120,14 +111,26 @@ function App() {
           </div>
 
           <div className="actions">
+            <div
+              className={`connection-status ${
+                isGmailConnected || emails.length > 0 ? "connected" : "disconnected"
+              }`}
+            >
+              <span className="status-dot" />
+              {isGmailConnected || emails.length > 0
+                ? "Gmail conectado"
+                : "Gmail desconectado"}
+            </div>
+
             <button
               onClick={connectGmail}
               disabled={isGmailConnected}
               className={!isGmailConnected ? "" : "disabled-button"}
             >
-              {isGmailConnected ? "Gmail conectado" : "Conectar Gmail"}
+              {isGmailConnected ? "Conectado" : "Conectar Gmail"}
             </button>
-            <button onClick={loadEmails}>
+
+            <button onClick={loadEmails} disabled={!isGmailConnected || loadingEmails}>
               {loadingEmails ? "Carregando..." : "Listar e-mails"}
             </button>
           </div>
