@@ -39,7 +39,7 @@ function App() {
     }
   }
 
-  async function analyzeEmail(messageId) {
+  async function analyzeEmail(messageId, force = false) {
     setError("");
     setAnalysis(null);
     setSelectedEmailId(messageId);
@@ -51,6 +51,12 @@ function App() {
         {
           method: "POST",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            force_refresh: force,
+          }),
         }
       );
 
@@ -65,6 +71,42 @@ function App() {
       setError(err.message);
     } finally {
       setLoadingAnalysis(false);
+    }
+  }
+
+  async function confirmLabel() {
+    if (!analysis?.gmail_message_id || !analysis?.suggested_label) return;
+
+    setError("");
+
+    try{
+      const response = await fetch(
+        `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/apply-label/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            label_name: analysis.suggested_label,
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao aplicar marcador.");
+      }
+
+      setAnalysis({
+        ...analysis,
+        gmail_label: data.gmail_label,
+        label_applied: true,
+      });
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -252,13 +294,16 @@ function App() {
                 </div>
 
                 <div className="analysis-actions">
-                  <button disabled>
-                    Confirmar marcador
+                  <button
+                    onClick={confirmLabel}
+                    disabled={analysis.label_applied}
+                  >
+                    {analysis.label_applied ? "Marcador aplicado" : "Confirmar marcador"}
                   </button>
 
                   <button
                   className="secondary"
-                  onClick={() => analyzeEmail(selectedEmailId)}
+                  onClick={() => analyzeEmail(selectedEmailId, true)}
                   >
                     Refazer análise
                   </button>
