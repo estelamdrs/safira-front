@@ -232,7 +232,7 @@ function App() {
                     {analysis.analysis.urgente ? "Urgente" : "Não urgente"}
                   </span>
                   <span className="badge label">
-                    Marcador: {analysis.gmail_label}
+                    Sugestão de marcador: {analysis.suggested_label}
                   </span>
                 </div>
 
@@ -249,6 +249,29 @@ function App() {
                 <div className="metadata">
                   <span>ID salvo: #{analysis.id}</span>
                   <span>{analysis.from_cache ? "Resultado em cache" : "Nova análise"}</span>
+                </div>
+
+                <div className="analysis-actions">
+                  <button disabled>
+                    Confirmar marcador
+                  </button>
+
+                  <button
+                  className="secondary"
+                  onClick={() => analyzeEmail(selectedEmailId)}
+                  >
+                    Refazer análise
+                  </button>
+
+                  <button
+                  className="cancel-button"
+                  onClick={() => {
+                    setAnalysis(null);
+                    setSelectedEmailId(null);
+                  }}
+                  >
+                    Cancelar
+                  </button>
                 </div>
               </div>
             )}
