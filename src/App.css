@@ -383,3 +383,20 @@ button:disabled {
     max-height: none;
   }
 }
+
+.load-more-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.load-more-button:hover {
+  background: #cbd5e1;
+}

@@ -11,19 +11,25 @@ function App() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [error, setError] = useState("");
   const [isGmailConnected, setIsGmailConnected] = useState(false);
+  const [nextPageToken, setNextPageToken] = useState(null)
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
   }
 
-  async function loadEmails() {
+  async function loadEmails(pageToken = null) {
     setError("");
     setLoadingEmails(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/gmail/messages/`, {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/gmail/messages/${
+          pageToken ? `?page_token=${pageToken}` : ""
+        }`,
+        {
+          credentials: "include",
+        }
+      )
 
       const data = await response.json();
 
@@ -31,7 +37,13 @@ function App() {
         throw new Error(data.error || "Erro ao buscar e-mails.");
       }
 
-      setEmails(data.messages || []);
+      setNextPageToken(data.next_page_token)
+      
+      if (pageToken) {
+        setEmails((prev) => [...prev, ...data.messages])
+      } else {
+        setEmails(data.messages)
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -171,7 +183,7 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="eyebrow">TCC · LLM + Gmail API</span>
+            <span className="eyebrow">LLM + Gmail API</span>
             <h2>Organização inteligente de e-mails</h2>
             <p>Classifique, resuma e aplique marcadores automaticamente.</p>
           </div>
@@ -198,7 +210,7 @@ function App() {
               </button>
             )}
 
-            <button onClick={loadEmails} disabled={!isGmailConnected || loadingEmails}>
+            <button onClick={() => loadEmails()} disabled={!isGmailConnected || loadingEmails}>
               {loadingEmails ? "Carregando..." : "Listar e-mails"}
             </button>
           </div>
@@ -241,6 +253,16 @@ function App() {
                 </article>
               ))}
             </div>
+
+            {nextPageToken && (
+              <button
+                className="load-more-button"
+                onClick={() => loadEmails(nextPageToken)}
+                disabled={loadingEmails}
+              >
+                {loadingEmails ? "Carregando..." : "Carregar mais e-mails"}
+              </button>
+            )}
           </section>
 
           <section className="panel analysis-panel">
