@@ -12,6 +12,8 @@ function App() {
   const [error, setError] = useState("");
   const [isGmailConnected, setIsGmailConnected] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null)
+  const [replySuggestion, setReplySuggestion] = useState(null);
+  const [loadingReply, setLoadingReply] = useState(false);
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -119,6 +121,36 @@ function App() {
       });
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function suggestReply() {
+    if (!analysis?.gmail_message_id) return;
+
+    setError("");
+    setLoadingReply(true);
+    setReplySuggestion(null);
+
+    try{
+      const response = await fetch(
+        `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/suggest-reply/`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao sugerir resposta.");
+      }
+
+      setReplySuggestion(data);
+    } catch(err) {
+      setError(err.message);
+    } finally {
+      setLoadingReply(false);
     }
   }
 
