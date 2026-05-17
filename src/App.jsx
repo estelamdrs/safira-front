@@ -15,6 +15,7 @@ function App() {
   const [replySuggestion, setReplySuggestion] = useState(null);
   const [loadingReply, setLoadingReply] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
+  const [repliedMessages, setRepliedMessages] = useState({});
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -131,6 +132,7 @@ function App() {
     setError("");
     setLoadingReply(true);
     setReplySuggestion(null);
+    setSendingReply(false);
 
     try{
       const response = await fetch(
@@ -161,7 +163,7 @@ function App() {
     setError("");
     setSendingReply(true);
 
-    if (replySuggestion?.sent) {
+    if (repliedMessages[analysis.gmail_message_id]) {
       const confirmSendAgain = window.confirm(
         "Você já enviou uma resposta para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
       );
@@ -194,6 +196,11 @@ function App() {
         ...replySuggestion,
         sent: true,
       });
+
+      setRepliedMessages((prev) => ({
+        ...prev,
+        [analysis.gmail_message_id]: true,
+      }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -422,6 +429,9 @@ function App() {
                   onClick={() => {
                     setAnalysis(null);
                     setSelectedEmailId(null);
+                    setReplySuggestion(null);
+                    setSendingReply(false);
+                    setLoadingReply(false);
                   }}
                   >
                     Cancelar
@@ -455,7 +465,7 @@ function App() {
                     >
                       {sendingReply
                         ? "Enviando..."
-                        : replySuggestion.sent
+                        : repliedMessages[analysis.gmail_message_id]
                           ? "Enviar nova resposta"
                           : "Enviar resposta"}
                     </button>
