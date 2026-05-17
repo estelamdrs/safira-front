@@ -363,6 +363,14 @@ function App() {
                   </button>
 
                   <button
+                    className="secondary"
+                    onClick={suggestReply}
+                    disabled={loadingReply}
+                  >
+                    {loadingReply ? "Gerando..." : "Sugerir resposta"}
+                  </button>
+
+                  <button
                   className="cancel-button"
                   onClick={() => {
                     setAnalysis(null);
@@ -372,6 +380,28 @@ function App() {
                     Cancelar
                   </button>
                 </div>
+
+                {replySuggestion && (
+                  <div className="reply-suggestion">
+                    <span>Resposta sugerida</span>
+
+                    <textarea
+                      value={replySuggestion.suggested_reply}
+                      onChange={(event) =>
+                        setReplySuggestion({
+                          ...replySuggestion,
+                          suggested_reply: event.target.value,
+                        })
+                      }
+                    />
+
+                    <p>
+                      {replySuggestion.needs_reply
+                        ? "A Safira identificou que este e-mail pode precisar de resposta."
+                        : "A Safira identificou que este e-mail talvez não precise de resposta."}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </section>
