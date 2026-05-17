@@ -161,6 +161,14 @@ function App() {
     setError("");
     setSendingReply(true);
 
+    if (replySuggestion?.sent) {
+      const confirmSendAgain = window.confirm(
+        "Você já enviou uma resposta para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
+      );
+
+      if (!confirmSendAgain) return;
+    }
+
     try{
       const response = await fetch(
         `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/send-reply/`,
@@ -439,6 +447,18 @@ function App() {
                         ? "A Safira identificou que este e-mail pode precisar de resposta."
                         : "A Safira identificou que este e-mail talvez não precise de resposta."}
                     </p>
+
+                    <button
+                      className="send-reply-button"
+                      onClick={sendReply}
+                      disabled={sendingReply}
+                    >
+                      {sendingReply
+                        ? "Enviando..."
+                        : replySuggestion.sent
+                          ? "Enviar nova resposta"
+                          : "Enviar resposta"}
+                    </button>
                   </div>
                 )}
               </div>

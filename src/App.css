@@ -451,3 +451,13 @@ button:disabled {
   color: #64748b;
   font-size: 13px;
 }
+
+.send-reply-button {
+  margin-top: 12px;
+  width: 100%;
+  background: #16a34a;
+}
+
+.send-reply-button:hover {
+  background: #15803d;
+}
