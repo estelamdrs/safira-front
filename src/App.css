@@ -221,9 +221,24 @@ button:disabled {
 
 .analysis-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 20px;
   flex-wrap: wrap;
+}
+
+.analysis-actions button {
+  min-width: auto;
+  height: 42px;
+  padding: 9px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  flex: 1;
+  white-space: nowrap;
+}
+
+.analysis-actions .cancel-button {
+  flex-basis: auto;
+  max-width: none;
 }
 
 .badges {
@@ -399,4 +414,50 @@ button:disabled {
 
 .load-more-button:hover {
   background: #cbd5e1;
+}
+
+.reply-suggestion {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.reply-suggestion span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.reply-suggestion textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid #cbd5e1;
+  border-radius: 18px;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.reply-suggestion p {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.send-reply-button {
+  margin-top: 12px;
+  width: 100%;
+  background: #16a34a;
+}
+
+.send-reply-button:hover {
+  background: #15803d;
 }

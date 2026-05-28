@@ -12,6 +12,10 @@ function App() {
   const [error, setError] = useState("");
   const [isGmailConnected, setIsGmailConnected] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null)
+  const [replySuggestion, setReplySuggestion] = useState(null);
+  const [loadingReply, setLoadingReply] = useState(false);
+  const [sendingReply, setSendingReply] = useState(false);
+  const [repliedMessages, setRepliedMessages] = useState({});
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -119,6 +123,88 @@ function App() {
       });
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function suggestReply() {
+    if (!analysis?.gmail_message_id) return;
+
+    setError("");
+    setLoadingReply(true);
+    setReplySuggestion(null);
+    setSendingReply(false);
+
+    try{
+      const response = await fetch(
+        `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/suggest-reply/`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao sugerir resposta.");
+      }
+
+      setReplySuggestion(data);
+    } catch(err) {
+      setError(err.message);
+    } finally {
+      setLoadingReply(false);
+    }
+  }
+
+  async function sendReply() {
+    if (!analysis?.gmail_message_id || !replySuggestion?.suggested_reply) return;
+
+    setError("");
+    setSendingReply(true);
+
+    if (repliedMessages[analysis.gmail_message_id]) {
+      const confirmSendAgain = window.confirm(
+        "Você já enviou uma resposta para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
+      );
+
+      if (!confirmSendAgain) return;
+    }
+
+    try{
+      const response = await fetch(
+        `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/send-reply/`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reply: replySuggestion.suggested_reply,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao enviar resposta.");
+      }
+
+      setReplySuggestion({
+        ...replySuggestion,
+        sent: true,
+      });
+
+      setRepliedMessages((prev) => ({
+        ...prev,
+        [analysis.gmail_message_id]: true,
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSendingReply(false);
     }
   }
 
@@ -331,15 +417,60 @@ function App() {
                   </button>
 
                   <button
+                    className="secondary"
+                    onClick={suggestReply}
+                    disabled={loadingReply}
+                  >
+                    {loadingReply ? "Gerando..." : "Sugerir resposta"}
+                  </button>
+
+                  <button
                   className="cancel-button"
                   onClick={() => {
                     setAnalysis(null);
                     setSelectedEmailId(null);
+                    setReplySuggestion(null);
+                    setSendingReply(false);
+                    setLoadingReply(false);
                   }}
                   >
                     Cancelar
                   </button>
                 </div>
+
+                {replySuggestion && (
+                  <div className="reply-suggestion">
+                    <span>Resposta sugerida</span>
+
+                    <textarea
+                      value={replySuggestion.suggested_reply}
+                      onChange={(event) =>
+                        setReplySuggestion({
+                          ...replySuggestion,
+                          suggested_reply: event.target.value,
+                        })
+                      }
+                    />
+
+                    <p>
+                      {replySuggestion.needs_reply
+                        ? "A Safira identificou que este e-mail pode precisar de resposta."
+                        : "A Safira identificou que este e-mail talvez não precise de resposta."}
+                    </p>
+
+                    <button
+                      className="send-reply-button"
+                      onClick={sendReply}
+                      disabled={sendingReply}
+                    >
+                      {sendingReply
+                        ? "Enviando..."
+                        : repliedMessages[analysis.gmail_message_id]
+                          ? "Enviar nova resposta"
+                          : "Enviar resposta"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>
