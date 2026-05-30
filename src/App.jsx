@@ -16,6 +16,7 @@ function App() {
   const [loadingReply, setLoadingReply] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
   const [repliedMessages, setRepliedMessages] = useState({});
+  const [activeProvider, setActiveProvider] = useState("gemini");
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -61,9 +62,11 @@ function App() {
     setSelectedEmailId(messageId);
     setLoadingAnalysis(true);
 
+    const email = emails.find((item) => item.id === messageId);
+
     try {
       const response = await fetch(
-        `${API_BASE_URL}/gmail/messages/${messageId}/summarize/`,
+        `${API_BASE_URL}/llm/compare-email/`,
         {
           method: "POST",
           credentials: "include",
@@ -71,7 +74,9 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            force_refresh: force,
+            subject: email?.subject || "",
+            body: email?.snippet || "",
+            existing_labels: ["Academico", "Trabalho", "Financeiro"],
           }),
         }
       );
@@ -82,7 +87,14 @@ function App() {
         throw new Error(data.error || "Erro ao analisar e-mail.");
       }
 
-      setAnalysis(data);
+      setAnalysis({
+        gmail_message_id: messageId,
+        subject: email?.subject || "Sem assunto",
+        results: data.results,
+        errors: data.errors,
+      });
+
+      setActiveProvider("gemini");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -91,11 +103,27 @@ function App() {
   }
 
   async function confirmLabel() {
-    if (!analysis?.gmail_message_id || !analysis?.suggested_label) return;
+    const currentAnalysis = analysis?.results?.[activeProvider];
+    const labelName = currentAnalysis?.gmail_label;
+
+    if (!analysis?.gmail_message_id || !labelName) return;
 
     setError("");
 
     try{
+      await fetch(`${API_BASE_URL}/llm/register-preference/`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_id: analysis.gmail_message_id,
+          provider: activeProvider,
+          action: "apply_label",
+        }),
+      });
+
       const response = await fetch(
         `${API_BASE_URL}/gmail/messages/${analysis.gmail_message_id}/apply-label/`,
         {
@@ -105,7 +133,7 @@ function App() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            label_name: analysis.suggested_label,
+            label_name: labelName,
           })
         }
       );
@@ -201,6 +229,19 @@ function App() {
         ...prev,
         [analysis.gmail_message_id]: true,
       }));
+
+      await fetch(`${API_BASE_URL}/llm/register-preference/`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_id: analysis.gmail_message_id,
+          provider: activeProvider,
+          action: "suggest_reply",
+        }),
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -255,6 +296,8 @@ function App() {
 
     checkGmailStatus();
   }, []);
+
+  const currentAnalysis = analysis?.results?.[activeProvider];
 
   return (
     <div className="app-shell">
@@ -369,37 +412,51 @@ function App() {
               </div>
             )}
 
-            {analysis && (
+            {analysis && currentAnalysis && (
               <div className="analysis-card">
                 <h4>{analysis.subject}</h4>
+                <div className="llm-tabs">
+                  <button
+                    className={activeProvider === "gemini" ? "llm-tab active" : "llm-tab"}
+                    onClick={() => setActiveProvider("gemini")}
+                  >
+                    Gemini
+                  </button>
 
+                  <button
+                    className={activeProvider === "llama" ? "llm-tab active" : "llm-tab"}
+                    onClick={() => setActiveProvider("llama")}
+                  >
+                    Llama
+                  </button>
+                </div>
                 <div className="badges">
-                  <span className="badge">{analysis.analysis.categoria}</span>
+                  <span className="badge">{currentAnalysis.categoria}</span>
                   <span
-                    className={`badge ${analysis.analysis.urgente ? "urgent" : "calm"
+                    className={`badge ${currentAnalysis.urgente ? "urgent" : "calm"
                       }`}
                   >
-                    {analysis.analysis.urgente ? "Urgente" : "Não urgente"}
+                    {currentAnalysis.urgente ? "Urgente" : "Não urgente"}
                   </span>
                   <span className="badge label">
-                    Sugestão de marcador: {analysis.suggested_label}
+                    Sugestão de marcador: {currentAnalysis.gmail_label}
                   </span>
                 </div>
 
                 <div className="analysis-section">
                   <span>Resumo</span>
-                  <p>{analysis.analysis.resumo}</p>
+                  <p>{currentAnalysis.resumo}</p>
                 </div>
 
                 <div className="analysis-section">
                   <span>Motivo da urgência</span>
-                  <p>{analysis.analysis.motivo_urgencia}</p>
+                  <p>{currentAnalysis.motivo_urgencia}</p>
                 </div>
 
-                <div className="metadata">
+                {/* <div className="metadata">
                   <span>ID salvo: #{analysis.id}</span>
                   <span>{analysis.from_cache ? "Resultado em cache" : "Nova análise"}</span>
-                </div>
+                </div> */}
 
                 <div className="analysis-actions">
                   <button
