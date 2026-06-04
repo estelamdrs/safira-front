@@ -168,6 +168,12 @@ function App() {
         {
           method: "POST",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            provider: activeProvider,
+          }),
         }
       );
 
@@ -403,7 +409,7 @@ function App() {
             </div>
 
             {loadingAnalysis && (
-              <div className="empty-state">Analisando e-mail com Gemini...</div>
+              <div className="empty-state">Analisando E-mail...</div>
             )}
 
             {!loadingAnalysis && !analysis && (
