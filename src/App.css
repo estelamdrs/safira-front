@@ -490,3 +490,24 @@ button:disabled {
   background: #2563eb;
   color: white;
 }
+
+.feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 16px;
+  flex-wrap: wrap;
+}
+
+.feedback-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.feedback-row button {
+  min-width: auto;
+  height: 32px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
