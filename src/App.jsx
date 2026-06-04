@@ -17,6 +17,8 @@ function App() {
   const [sendingReply, setSendingReply] = useState(false);
   const [repliedMessages, setRepliedMessages] = useState({});
   const [activeProvider, setActiveProvider] = useState("gemini");
+  const [categoryFeedback, setCategoryFeedback] = useState(null);
+  const [replyFeedback, setReplyFeedback] = useState(null);
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -59,6 +61,9 @@ function App() {
   async function analyzeEmail(messageId, force = false) {
     setError("");
     setAnalysis(null);
+    setReplySuggestion(null);
+    setCategoryFeedback(null);
+    setReplyFeedback(null);
     setSelectedEmailId(messageId);
     setLoadingAnalysis(true);
 
@@ -245,7 +250,7 @@ function App() {
         body: JSON.stringify({
           email_id: analysis.gmail_message_id,
           provider: activeProvider,
-          action: "suggest_reply",
+          action: "send_reply",
         }),
       });
     } catch (err) {
@@ -274,6 +279,43 @@ function App() {
       setEmails([]);
       setAnalysis(null);
       setSelectedEmailId(null);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function registerFeedback(action) {
+    if (!analysis?.gmail_message_id) return;
+
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/llm/register-preference/`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email_id: analysis.gmail_message_id,
+          provider: activeProvider,
+          action,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao registrar feedback.");
+      }
+
+      if (action.startsWith("category_")) {
+        setCategoryFeedback(action);
+      }
+
+      if (action.startsWith("reply_")) {
+        setReplyFeedback(action);
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -320,7 +362,7 @@ function App() {
           <div>
             <span className="eyebrow">LLM + Gmail API</span>
             <h2>Organização inteligente de e-mails</h2>
-            <p>Classifique, resuma e aplique marcadores automaticamente.</p>
+            <p>Classifique, resuma, aplique marcadores e responda automaticamente.</p>
           </div>
 
           <div className="actions">
@@ -404,12 +446,12 @@ function App() {
             <div className="panel-header">
               <div>
                 <h3>Análise inteligente</h3>
-                <p>Resumo, categoria, urgência e marcador aplicado.</p>
+                <p>Resumo, categoria, urgência, marcador e sugestão de resposta.</p>
               </div>
             </div>
 
             {loadingAnalysis && (
-              <div className="empty-state">Analisando E-mail...</div>
+              <div className="empty-state">Analisando e-mail...</div>
             )}
 
             {!loadingAnalysis && !analysis && (
@@ -447,6 +489,24 @@ function App() {
                   <span className="badge label">
                     Sugestão de marcador: {currentAnalysis.gmail_label}
                   </span>
+                </div>
+
+                <div className="feedback-row">
+                  <span>Categoria sugerida:</span>
+
+                  <button
+                    onClick={() => registerFeedback("category_ok")}
+                    disabled={!!categoryFeedback}
+                  >
+                    OK
+                  </button>
+
+                  <button
+                    onClick={() => registerFeedback("category_not_ok")}
+                    disabled={!!categoryFeedback}
+                  >
+                    Não
+                  </button>
                 </div>
 
                 <div className="analysis-section">
@@ -495,6 +555,8 @@ function App() {
                     setReplySuggestion(null);
                     setSendingReply(false);
                     setLoadingReply(false);
+                    setCategoryFeedback(null);
+                    setReplyFeedback(null);
                   }}
                   >
                     Cancelar
@@ -520,6 +582,31 @@ function App() {
                         ? "A Safira identificou que este e-mail pode precisar de resposta."
                         : "A Safira identificou que este e-mail talvez não precise de resposta."}
                     </p>
+
+                    <div className="feedback-row">
+                      <span>Resposta sugerida:</span>
+
+                      <button
+                        onClick={() => registerFeedback("reply_good")}
+                        disabled={!!replyFeedback}
+                      >
+                        Boa
+                      </button>
+
+                      <button
+                        onClick={() => registerFeedback("reply_medium")}
+                        disabled={!!replyFeedback}
+                      >
+                        Média
+                      </button>
+
+                      <button
+                        onClick={() => registerFeedback("reply_bad")}
+                        disabled={!!replyFeedback}
+                      >
+                        Ruim
+                      </button>
+                    </div>
 
                     <button
                       className="send-reply-button"
