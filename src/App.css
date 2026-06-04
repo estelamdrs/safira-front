@@ -461,3 +461,32 @@ button:disabled {
 .send-reply-button:hover {
   background: #15803d;
 }
+
+.llm-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 18px;
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 999px;
+}
+
+.llm-tab {
+  flex: 1;
+  min-width: auto;
+  height: 38px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #64748b;
+  box-shadow: none;
+}
+
+.llm-tab:hover {
+  transform: none;
+  opacity: 1;
+}
+
+.llm-tab.active {
+  background: #2563eb;
+  color: white;
+}
