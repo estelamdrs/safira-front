@@ -460,7 +460,7 @@ function App() {
               </div>
             )}
 
-            {analysis && currentAnalysis && (
+            {analysis && (
               <div className="analysis-card">
                 <h4>{analysis.subject}</h4>
                 <div className="llm-tabs">
@@ -478,90 +478,96 @@ function App() {
                     Llama
                   </button>
                 </div>
-                <div className="badges">
-                  <span className="badge">{currentAnalysis.categoria}</span>
-                  <span
-                    className={`badge ${currentAnalysis.urgente ? "urgent" : "calm"
-                      }`}
-                  >
-                    {currentAnalysis.urgente ? "Urgente" : "Não urgente"}
-                  </span>
-                  <span className="badge label">
-                    Sugestão de marcador: {currentAnalysis.gmail_label}
-                  </span>
-                </div>
+                {!currentAnalysis && (
+                  <div className="empty-state">
+                    {activeProvider === "llama"
+                      ? "Llama indisponível no momento. Verifique se o Ollama e o túnel estão ativos."
+                      : "Gemini indisponível no momento. Tente novamente mais tarde ou use a aba Llama."}
+                  </div>
+                )}
 
-                <div className="feedback-row">
-                  <span>Categoria sugerida:</span>
+                {currentAnalysis && (
+                  <>
+                    <div className="badges">
+                      <span className="badge">{currentAnalysis.categoria}</span>
+                      <span
+                        className={`badge ${currentAnalysis.urgente ? "urgent" : "calm"}`}
+                      >
+                        {currentAnalysis.urgente ? "Urgente" : "Não urgente"}
+                      </span>
+                      <span className="badge label">
+                        Sugestão de marcador: {currentAnalysis.gmail_label}
+                      </span>
+                    </div>
 
-                  <button
-                    onClick={() => registerFeedback("category_ok")}
-                    disabled={!!categoryFeedback}
-                  >
-                    OK
-                  </button>
+                    <div className="feedback-row">
+                      <span>Categoria sugerida:</span>
 
-                  <button
-                    onClick={() => registerFeedback("category_not_ok")}
-                    disabled={!!categoryFeedback}
-                  >
-                    Não
-                  </button>
-                </div>
+                      <button
+                        onClick={() => registerFeedback("category_ok")}
+                        disabled={!!categoryFeedback}
+                      >
+                        OK
+                      </button>
 
-                <div className="analysis-section">
-                  <span>Resumo</span>
-                  <p>{currentAnalysis.resumo}</p>
-                </div>
+                      <button
+                        onClick={() => registerFeedback("category_not_ok")}
+                        disabled={!!categoryFeedback}
+                      >
+                        Não
+                      </button>
+                    </div>
 
-                <div className="analysis-section">
-                  <span>Motivo da urgência</span>
-                  <p>{currentAnalysis.motivo_urgencia}</p>
-                </div>
+                    <div className="analysis-section">
+                      <span>Resumo</span>
+                      <p>{currentAnalysis.resumo}</p>
+                    </div>
 
-                {/* <div className="metadata">
-                  <span>ID salvo: #{analysis.id}</span>
-                  <span>{analysis.from_cache ? "Resultado em cache" : "Nova análise"}</span>
-                </div> */}
+                    <div className="analysis-section">
+                      <span>Motivo da urgência</span>
+                      <p>{currentAnalysis.motivo_urgencia}</p>
+                    </div>
 
-                <div className="analysis-actions">
-                  <button
-                    onClick={confirmLabel}
-                    disabled={analysis.label_applied}
-                  >
-                    {analysis.label_applied ? "Marcador aplicado" : "Confirmar marcador"}
-                  </button>
+                    <div className="analysis-actions">
+                      <button
+                        onClick={confirmLabel}
+                        disabled={analysis.label_applied}
+                      >
+                        {analysis.label_applied ? "Marcador aplicado" : "Confirmar marcador"}
+                      </button>
 
-                  <button
-                  className="secondary"
-                  onClick={() => analyzeEmail(selectedEmailId, true)}
-                  >
-                    Refazer análise
-                  </button>
+                      <button
+                        className="secondary"
+                        onClick={() => analyzeEmail(selectedEmailId, true)}
+                      >
+                        Refazer análise
+                      </button>
 
-                  <button
-                    className="secondary"
-                    onClick={suggestReply}
-                    disabled={loadingReply}
-                  >
-                    {loadingReply ? "Gerando..." : "Sugerir resposta"}
-                  </button>
+                      <button
+                        className="secondary"
+                        onClick={suggestReply}
+                        disabled={loadingReply}
+                      >
+                        {loadingReply ? "Gerando..." : "Sugerir resposta"}
+                      </button>
 
-                  <button
-                  className="cancel-button"
-                  onClick={() => {
-                    setAnalysis(null);
-                    setSelectedEmailId(null);
-                    setReplySuggestion(null);
-                    setSendingReply(false);
-                    setLoadingReply(false);
-                    setCategoryFeedback(null);
-                    setReplyFeedback(null);
-                  }}
-                  >
-                    Cancelar
-                  </button>
-                </div>
+                      <button
+                        className="cancel-button"
+                        onClick={() => {
+                          setAnalysis(null);
+                          setSelectedEmailId(null);
+                          setReplySuggestion(null);
+                          setSendingReply(false);
+                          setLoadingReply(false);
+                          setCategoryFeedback(null);
+                          setReplyFeedback(null);
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
+                )}
 
                 {replySuggestion && (
                   <div className="reply-suggestion">
