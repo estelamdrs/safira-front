@@ -353,6 +353,12 @@ function App() {
 
     const params = new URLSearchParams(window.location.search);
 
+    const safiraSessionKey = params.get("safira_session_key");
+
+    if (safiraSessionKey) {
+      localStorage.setItem("safira_session_key", safiraSessionKey);
+    }
+
     if (params.get("gmail_connected") === "true") {
       window.history.replaceState({}, "", window.location.pathname);
     }
