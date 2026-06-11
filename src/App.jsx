@@ -24,6 +24,14 @@ function App() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
   }
 
+  function getAuthHeaders() {
+    const sessionKey = localStorage.getItem("safira_session_key");
+
+    return sessionKey
+      ? { "X-Safira-Session-Key": sessionKey }
+      : {};
+  }
+
   async function loadEmails(pageToken = null) {
     setError("");
     setLoadingEmails(true);
@@ -77,6 +85,7 @@ function App() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             subject: email?.subject || "",
@@ -121,6 +130,7 @@ function App() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           email_id: analysis.gmail_message_id,
@@ -136,6 +146,7 @@ function App() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             label_name: labelName,
@@ -175,6 +186,7 @@ function App() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             provider: activeProvider,
@@ -218,6 +230,7 @@ function App() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           body: JSON.stringify({
             reply: replySuggestion.suggested_reply,
@@ -246,6 +259,7 @@ function App() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           email_id: analysis.gmail_message_id,
@@ -295,6 +309,7 @@ function App() {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           email_id: analysis.gmail_message_id,
