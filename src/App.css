@@ -511,3 +511,107 @@ button:disabled {
   padding: 6px 12px;
   font-size: 12px;
 }
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    min-height: auto;
+    padding: 24px;
+    border-radius: 0;
+  }
+
+  .sidebar .brand-badge {
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+  }
+
+  .sidebar h1 {
+    font-size: 32px;
+    margin-top: 16px;
+  }
+
+  .sidebar p {
+    max-width: 260px;
+  }
+
+  .main-content {
+    padding: 28px 18px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .topbar h2 {
+    font-size: 34px;
+    line-height: 1.1;
+  }
+
+  .actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions button,
+  .connection-status {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .panel {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .email-list {
+    max-height: none;
+  }
+
+  .email-item {
+    padding: 18px;
+  }
+
+  .email-topline {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .analysis-actions {
+    flex-direction: column;
+  }
+
+  .analysis-actions button,
+  .send-reply-button {
+    width: 100%;
+  }
+
+  .llm-tabs {
+    width: 100%;
+  }
+
+  .llm-tab {
+    flex: 1;
+  }
+
+  .feedback-row {
+    flex-wrap: wrap;
+  }
+
+  .reply-suggestion textarea {
+    min-height: 160px;
+  }
+}
