@@ -43,8 +43,11 @@ function App() {
         }`,
         {
           credentials: "include",
+          headers: {
+            ...getAuthHeaders(),
+          },
         }
-      )
+      );
 
       const data = await response.json();
 
@@ -219,7 +222,10 @@ function App() {
         "Você já enviou uma resposta para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
       );
 
-      if (!confirmSendAgain) return;
+      if (!confirmSendAgain) {
+        setSendingReply(false);
+        return;
+      }
     }
 
     try{
@@ -281,6 +287,9 @@ function App() {
       const response = await fetch(`${API_BASE_URL}/gmail/disconnect/`, {
         method: "POST",
         credentials: "include",
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       const data = await response.json();
@@ -288,6 +297,8 @@ function App() {
       if (!response.ok) {
         throw new Error(data.error || "Erro ao desconectar Gmail.");
       }
+
+      localStorage.removeItem("safira_session_key");
 
       setIsGmailConnected(false);
       setEmails([]);
@@ -341,6 +352,9 @@ function App() {
       try {
         const response = await fetch(`${API_BASE_URL}/gmail/status/`, {
           credentials: "include",
+          headers: {
+            ...getAuthHeaders(),
+          },
         });
 
         const data = await response.json();
