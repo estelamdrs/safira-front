@@ -12,13 +12,14 @@ function App() {
   const [error, setError] = useState("");
   const [isGmailConnected, setIsGmailConnected] = useState(false);
   const [nextPageToken, setNextPageToken] = useState(null)
-  const [replySuggestion, setReplySuggestion] = useState(null);
+  const [replySuggestionsByProvider, setReplySuggestionsByProvider] = useState({});
   const [loadingReply, setLoadingReply] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
   const [repliedMessages, setRepliedMessages] = useState({});
+  const [labelAppliedByProvider, setLabelAppliedByProvider] = useState({});
   const [activeProvider, setActiveProvider] = useState("gemini");
-  const [categoryFeedback, setCategoryFeedback] = useState(null);
-  const [replyFeedback, setReplyFeedback] = useState(null);
+  const [categoryFeedbackByProvider, setCategoryFeedbackByProvider] = useState({});
+  const [replyFeedbackByProvider, setReplyFeedbackByProvider] = useState({});
 
   function connectGmail() {
     window.location.href = `${API_BASE_URL}/gmail/auth/`;
@@ -72,9 +73,6 @@ function App() {
   async function analyzeEmail(messageId, force = false) {
     setError("");
     setAnalysis(null);
-    setReplySuggestion(null);
-    setCategoryFeedback(null);
-    setReplyFeedback(null);
     setSelectedEmailId(messageId);
     setLoadingAnalysis(true);
 
@@ -125,6 +123,8 @@ function App() {
 
     if (!analysis?.gmail_message_id || !labelName) return;
 
+    const providerActionKey = `${analysis.gmail_message_id}:${activeProvider}`;
+
     setError("");
 
     try{
@@ -163,10 +163,14 @@ function App() {
         throw new Error(data.error || "Erro ao aplicar marcador.");
       }
 
+      setLabelAppliedByProvider((prev) => ({
+        ...prev,
+        [providerActionKey]: true,
+      }));
+
       setAnalysis({
         ...analysis,
         gmail_label: data.gmail_label,
-        label_applied: true,
       });
     } catch (err) {
       setError(err.message);
@@ -178,8 +182,14 @@ function App() {
 
     setError("");
     setLoadingReply(true);
-    setReplySuggestion(null);
     setSendingReply(false);
+
+    const providerActionKey = `${analysis.gmail_message_id}:${activeProvider}`;
+
+    setReplySuggestionsByProvider((prev) => ({
+      ...prev,
+      [providerActionKey]: null,
+    }));
 
     try{
       const response = await fetch(
@@ -203,7 +213,10 @@ function App() {
         throw new Error(data.error || "Erro ao sugerir resposta.");
       }
 
-      setReplySuggestion(data);
+      setReplySuggestionsByProvider((prev) => ({
+        ...prev,
+        [providerActionKey]: data,
+      }));
     } catch(err) {
       setError(err.message);
     } finally {
@@ -212,14 +225,19 @@ function App() {
   }
 
   async function sendReply() {
-    if (!analysis?.gmail_message_id || !replySuggestion?.suggested_reply) return;
+    if (!analysis?.gmail_message_id) return;
+
+    const providerActionKey = `${analysis.gmail_message_id}:${activeProvider}`;
+    const currentReplySuggestion = replySuggestionsByProvider[providerActionKey];
+
+    if (!currentReplySuggestion?.suggested_reply) return;
 
     setError("");
     setSendingReply(true);
 
-    if (repliedMessages[analysis.gmail_message_id]) {
+    if (repliedMessages[providerActionKey]) {
       const confirmSendAgain = window.confirm(
-        "Você já enviou uma resposta para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
+        "Você já enviou uma resposta com este provedor para este e-mail. Deseja enviar uma nova resposta mesmo assim?"
       );
 
       if (!confirmSendAgain) {
@@ -239,7 +257,7 @@ function App() {
             ...getAuthHeaders(),
           },
           body: JSON.stringify({
-            reply: replySuggestion.suggested_reply,
+            reply: currentReplySuggestion.suggested_reply,
           }),
         }
       );
@@ -250,14 +268,17 @@ function App() {
         throw new Error(data.error || "Erro ao enviar resposta.");
       }
 
-      setReplySuggestion({
-        ...replySuggestion,
-        sent: true,
-      });
+      setReplySuggestionsByProvider((prev) => ({
+        ...prev,
+        [providerActionKey]: {
+          ...currentReplySuggestion,
+          sent: true,
+        },
+      }));
 
       setRepliedMessages((prev) => ({
         ...prev,
-        [analysis.gmail_message_id]: true,
+        [providerActionKey]: true,
       }));
 
       await fetch(`${API_BASE_URL}/llm/register-preference/`, {
@@ -304,6 +325,10 @@ function App() {
       setEmails([]);
       setAnalysis(null);
       setSelectedEmailId(null);
+      setReplySuggestionsByProvider({});
+      setLabelAppliedByProvider({});
+      setCategoryFeedbackByProvider({});
+      setReplyFeedbackByProvider({});
     } catch (err) {
       setError(err.message);
     }
@@ -311,6 +336,8 @@ function App() {
 
   async function registerFeedback(action) {
     if (!analysis?.gmail_message_id) return;
+
+    const providerActionKey = `${analysis.gmail_message_id}:${activeProvider}`;
 
     setError("");
 
@@ -336,11 +363,17 @@ function App() {
       }
 
       if (action.startsWith("category_")) {
-        setCategoryFeedback(action);
+        setCategoryFeedbackByProvider((prev) => ({
+          ...prev,
+          [providerActionKey]: action,
+        }));
       }
 
       if (action.startsWith("reply_")) {
-        setReplyFeedback(action);
+        setReplyFeedbackByProvider((prev) => ({
+          ...prev,
+          [providerActionKey]: action,
+        }));
       }
     } catch (err) {
       setError(err.message);
@@ -381,6 +414,24 @@ function App() {
   }, []);
 
   const currentAnalysis = analysis?.results?.[activeProvider];
+  const providerActionKey = analysis?.gmail_message_id
+    ? `${analysis.gmail_message_id}:${activeProvider}`
+    : null;
+  const categoryFeedback = providerActionKey
+    ? categoryFeedbackByProvider[providerActionKey]
+    : null;
+  const replyFeedback = providerActionKey
+    ? replyFeedbackByProvider[providerActionKey]
+    : null;
+  const labelApplied = providerActionKey
+    ? labelAppliedByProvider[providerActionKey]
+    : false;
+  const replySuggestion = providerActionKey
+    ? replySuggestionsByProvider[providerActionKey]
+    : null;
+  const alreadyRepliedWithProvider = providerActionKey
+    ? repliedMessages[providerActionKey]
+    : false;
 
   return (
     <div className="app-shell">
@@ -566,9 +617,9 @@ function App() {
                     <div className="analysis-actions">
                       <button
                         onClick={confirmLabel}
-                        disabled={analysis.label_applied}
+                        disabled={!!labelApplied}
                       >
-                        {analysis.label_applied ? "Marcador aplicado" : "Confirmar marcador"}
+                        {labelApplied ? "Marcador aplicado" : "Confirmar marcador"}
                       </button>
 
                       <button
@@ -591,11 +642,14 @@ function App() {
                         onClick={() => {
                           setAnalysis(null);
                           setSelectedEmailId(null);
-                          setReplySuggestion(null);
+                          if (providerActionKey) {
+                            setReplySuggestionsByProvider((prev) => ({
+                              ...prev,
+                              [providerActionKey]: null,
+                            }));
+                          }
                           setSendingReply(false);
                           setLoadingReply(false);
-                          setCategoryFeedback(null);
-                          setReplyFeedback(null);
                         }}
                       >
                         Cancelar
@@ -611,10 +665,13 @@ function App() {
                     <textarea
                       value={replySuggestion.suggested_reply}
                       onChange={(event) =>
-                        setReplySuggestion({
-                          ...replySuggestion,
-                          suggested_reply: event.target.value,
-                        })
+                        setReplySuggestionsByProvider((prev) => ({
+                          ...prev,
+                          [providerActionKey]: {
+                            ...replySuggestion,
+                            suggested_reply: event.target.value,
+                          },
+                        }))
                       }
                     />
 
@@ -656,7 +713,7 @@ function App() {
                     >
                       {sendingReply
                         ? "Enviando..."
-                        : repliedMessages[analysis.gmail_message_id]
+                        : alreadyRepliedWithProvider
                           ? "Enviar nova resposta"
                           : "Enviar resposta"}
                     </button>
