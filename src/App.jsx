@@ -109,7 +109,13 @@ function App() {
         errors: data.errors,
       });
 
-      setActiveProvider("gemini");
+      if (data.results?.gemini) {
+        setActiveProvider("gemini");
+      } else if (data.results?.llama) {
+        setActiveProvider("llama");
+      } else {
+        setActiveProvider("gemini");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -567,8 +573,8 @@ function App() {
                 {!currentAnalysis && (
                   <div className="empty-state">
                     {activeProvider === "llama"
-                      ? "Llama indisponível no momento. Verifique se o Ollama e o túnel estão ativos."
-                      : "Gemini indisponível no momento. Tente novamente mais tarde ou use a aba Llama."}
+                      ? "Llama indisponível no momento. Tente novamente mais tarde."
+                      : "Gemini indisponível no momento. Tente novamente mais tarde."}
                   </div>
                 )}
 
