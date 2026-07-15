@@ -3,6 +3,11 @@ import "./App.css";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const PROVIDER_LABELS = {
+  gemini: "Modelo 1",
+  llama: "Modelo 2",
+};
+
 function App() {
   const [emails, setEmails] = useState([]);
   const [analysis, setAnalysis] = useState(null);
@@ -452,7 +457,6 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="eyebrow">LLM + Gmail API</span>
             <h2>Organização inteligente de e-mails</h2>
             <p>Classifique, resuma, aplique marcadores e responda automaticamente.</p>
           </div>
@@ -560,14 +564,14 @@ function App() {
                     className={activeProvider === "gemini" ? "llm-tab active" : "llm-tab"}
                     onClick={() => setActiveProvider("gemini")}
                   >
-                    Gemini
+                    {PROVIDER_LABELS.gemini}
                   </button>
 
                   <button
                     className={activeProvider === "llama" ? "llm-tab active" : "llm-tab"}
                     onClick={() => setActiveProvider("llama")}
                   >
-                    Llama
+                    {PROVIDER_LABELS.llama}
                   </button>
                 </div>
                 {!currentAnalysis && (
